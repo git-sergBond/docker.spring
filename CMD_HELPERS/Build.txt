@@ -1,0 +1,5 @@
+mvn package
+build
+$ mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
+docker build -t spring-kafka-porstgres-redis .
+docker run -it -p 8080:8080 spring-kafka-porstgres-redis

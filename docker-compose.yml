@@ -1,0 +1,57 @@
+version: '3.1'
+services:
+  database1:
+    image: postgres #10
+    hostname: database1
+    #restart: always
+    networks:
+      - default
+    container_name: database1
+    environment:
+      - POSTGRES_USER=admin1
+      - POSTGRES_PASSWORD=admin1
+      - POSTGRES_DB=test2
+    volumes:
+      - database1-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+  service1:
+    build: .
+    depends_on:
+      - database1
+    networks:
+      - default
+    environment:
+      - spring.datasource.url=jdbc:postgresql://database1:5432/test2
+      - spring.datasource.username=admin1
+      - spring.datasource.password=admin1
+    ports:
+      - 8080:8080
+
+  zookeeper-1:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper-1
+    ports:
+      - "12181:12181"
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 12181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper-1:12888:13888
+
+  kafka-1:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka-1
+    ports:
+      - "19092:19092"
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:12181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:19092
+volumes:
+  database1-data:
+    driver: local

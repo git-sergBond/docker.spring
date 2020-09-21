@@ -15,24 +15,31 @@ services:
       - database1-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
-  service1:
-    build: .
-    depends_on:
-      - database1
-    networks:
-      - default
-    environment:
-      - spring.datasource.url=jdbc:postgresql://database1:5432/test2
-      - spring.datasource.username=admin1
-      - spring.datasource.password=admin1
-    ports:
-      - 8080:8080
+#  service1:
+#    build: .
+#    depends_on:
+#      - database1
+#      - kafka-1
+#    networks:
+#      - default
+#    environment:
+#      #- Env/service1.env
+#      - spring.datasource.url=jdbc:postgresql://database1:5432/test2
+#      - spring.datasource.username=admin1
+#      - spring.datasource.password=admin1
+#      - kafka.bootstrapAddress=zookeeper-1:12888:13888
+#    ports:
+#      - 8080:8080
 
   zookeeper-1:
     image: confluentinc/cp-zookeeper:latest
     hostname: zookeeper-1
     ports:
       - "12181:12181"
+    networks:
+      - default
+   # healthcheck:
+   #   test: ["CMD"]
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 12181
@@ -46,12 +53,20 @@ services:
     hostname: kafka-1
     ports:
       - "19092:19092"
+    networks:
+      - default
     depends_on:
       - zookeeper-1
+        #condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_HOST_NAME: "0.0.0.0"
+      KAFKA_CREATE_TOPICS: "MESSAGE_TOPIC:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:12181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:19092
+      #KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:19092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
 volumes:
   database1-data:
     driver: local
